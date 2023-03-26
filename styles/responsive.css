@@ -1,0 +1,39 @@
+@media screen and (max-width: 750px) {
+    .nav-links {
+        display: none;
+    }
+
+    .burger {
+        display: block;
+    }
+
+    .navbar.responsive {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+        .navbar.responsive .nav-links {
+            display: block;
+            margin: 16px 0;
+        }
+
+            .navbar.responsive .nav-links li {
+                margin: 8px 0;
+            }
+
+            .navbar.responsive .nav-links a {
+                font-size: 18px;
+            }
+
+    .burger.active .line1 {
+        transform: rotate(-45deg) translate(-5px, 6px);
+    }
+
+    .burger.active .line2 {
+        opacity: 0;
+    }
+
+    .burger.active .line3 {
+        transform: rotate(45deg) translate(-5px, -6px);
+    }
+}

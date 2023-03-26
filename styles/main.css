@@ -1,0 +1,25 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+html {
+    scroll-behavior: smooth;
+}
+body {
+    background-color: #1F1B24;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: white;
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+.logo {
+    width: 100px;
+    position: fixed;
+    top: 8%;
+    left: 2%;
+}

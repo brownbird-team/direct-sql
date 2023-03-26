@@ -58,7 +58,7 @@ if ($request_method === 'POST') {
         if ($field -> type === 252)
             echo '<input type="file" name="'. $field -> name .'">';
         else
-            echo '<input type="text" name="'. $field -> name .'">';
+            echo '<input type="text" name="'. $field -> name .'" placeholder="'. $field -> name .'">';
         echo '</div>';
     }
     ?>

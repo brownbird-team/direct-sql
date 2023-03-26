@@ -7,13 +7,6 @@ $fields = $car_res -> fetch_fields();
 
 ?>
 
-<style>
-    table, tr, td, th {
-        border-collapse: collapse;
-        border: 1px solid black;
-    }
-</style>
-
 <table>
     <tr>
         <?php foreach ($fields as $field)
