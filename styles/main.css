@@ -6,9 +6,11 @@ html {
     scroll-behavior: smooth;
 }
 body {
+    display: relative;
     background-color: #1F1B24;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     color: white;
+    padding-top: 7rem;
 }
 .container {
     display: flex;
@@ -17,9 +19,9 @@ body {
     align-items: center;
     gap: 1rem;
 }
-.logo {
+/*.imglogo {
     width: 100px;
     position: fixed;
-    top: 8%;
+    top: max(8%, 5rem);
     left: 2%;
-}
+}*/

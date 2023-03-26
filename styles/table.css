@@ -1,5 +1,5 @@
 table {
-    width: 70%;
+    width: 100%;
 }
 th, td {
     padding: 1rem;
@@ -21,4 +21,9 @@ tr:nth-child(even) {
 }
 tr:nth-child(odd) {
     background-color: #6D6D64;
+}
+.table-container {
+    width: max(25rem, 80vw);
+    overflow-x: auto;
+    margin: 2rem 0;
 }

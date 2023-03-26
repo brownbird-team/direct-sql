@@ -1,20 +1,23 @@
 form {
     display: flex;
     flex-direction: column;
+    justify-self: center;
     gap: 1rem;
     font-size: 20px;
 }
 form div {
     display: flex;
+    width: 25rem;
     justify-content: space-between;
-    gap: 5rem;
 }
-input[type="text"] {
+
+input[type="text"], input[type="file"] {
     background-color: transparent;
     border: 1px solid white;
     border-radius: 5px;
     padding: 2%;
     color: white;
+    width: 14rem;
 }
 ::placeholder {
     color: white;
@@ -31,6 +34,7 @@ input[type="submit"] {
     border: none;
     border-radius: 10px;
     transition: all 0.4s ease-in-out;
+    margin-top: 1rem;
 }
 input[type="submit"]:hover {
     background-position: left bottom;
