@@ -1,3 +1,5 @@
+<?php require __DIR__ . '/config/config.php' ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +20,7 @@
 
     <!-- <img src="images/logo.png" class="imglogo"> -->
     <div class="container">
-        <h1>Cars Database</h1>
+        <h1><?php echo ucwords($config['table_name']) ?> Table</h1>
 
         <?php require __DIR__ . '/elements/cars_insert_form.php' ?>
         <?php require __DIR__ . '/elements/cars_table.php' ?>
