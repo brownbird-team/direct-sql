@@ -24,7 +24,8 @@ input[type="text"], input[type="file"] {
 }
 
 input[type="submit"] {
-    background: linear-gradient(to right, #ffdb00,  #259dcc 50% 50%);
+    color: white;
+    background: linear-gradient(to right, #473899,  #0d5997 50% 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     font-size: 20px;
