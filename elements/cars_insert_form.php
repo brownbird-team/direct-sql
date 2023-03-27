@@ -2,18 +2,20 @@
 
 require_once __DIR__ . '/../functions/database.php';
 
-$cars_table = $conn -> query('SELECT name, description, price, image, color FROM cars');
-$fields = $cars_table -> fetch_fields();
+$fields = [];
+
+$cars_table_fields = $conn -> query('SHOW FIELDS FROM cars WHERE extra NOT LIKE \'%AUTO_INCREMENT%\'');
+while ($field = $cars_table_fields -> fetch_assoc())
+    $fields[] = $field;
 
 $insert_error = '';
-
 $request_method = strtoupper($_SERVER['REQUEST_METHOD']);
 
 if ($request_method === 'POST') {
     $query = 'INSERT INTO cars (';
 
     for ($i = 0; $i < count($fields); $i++) {
-        $query .= $fields[$i] -> name;
+        $query .= $fields[$i]['Field'];
         if ($i < count($fields) - 1)
             $query .= ',';
     }
@@ -21,8 +23,8 @@ if ($request_method === 'POST') {
     $query .= ') VALUES (';
 
     for ($i = 0; $i < count($fields); $i++) {
-        if (!empty($_FILES[$fields[$i] -> name]['name']) && $fields[$i] -> type == 252) {
-            $image = $_FILES[$fields[$i] -> name]['tmp_name'];
+        if (!empty($_FILES[$fields[$i]['Field']]['name']) && $fields[$i]['Type'] == 'longblob') {
+            $image = $_FILES[$fields[$i]['Field']]['tmp_name'];
 
             $img_content = $conn -> real_escape_string(file_get_contents($image));
             $query .= "'" . $img_content . "'";
@@ -30,8 +32,8 @@ if ($request_method === 'POST') {
             if ($i < count($fields) - 1)
                 $query .= ',';
 
-        } else if (!empty($_POST[$fields[$i] -> name])) {
-            $query .= "'" . $_POST[$fields[$i] -> name] . "'";
+        } else if (!empty($_POST[$fields[$i]['Field']])) {
+            $query .= "'" . $_POST[$fields[$i]['Field']] . "'";
 
             if ($i < count($fields) - 1)
                 $query .= ',';
@@ -54,11 +56,11 @@ if ($request_method === 'POST') {
 <form enctype="multipart/form-data" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
     <?php
     foreach ($fields as $field) {
-        echo '<div> <label for="'. $field -> name .'">'. $field -> name .':</label>';
-        if ($field -> type === 252)
-            echo '<input type="file" name="'. $field -> name .'">';
+        echo '<div> <label for="'. $field['Field'] .'">'. $field['Field'] .':</label>';
+        if ($field['Type'] == 'longblob')
+            echo '<input type="file" name="'. $field['Field'] .'">';
         else
-            echo '<input type="text" name="'. $field -> name .'" placeholder="'. $field -> name .'">';
+            echo '<input type="text" name="'. $field['Field'] .'" placeholder="'. $field['Field'] .'">';
         echo '</div>';
     }
     ?>
