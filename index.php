@@ -14,11 +14,8 @@
     <link rel='stylesheet' type='text/css' href='styles/responsive.css'/>
 </head>
 <body>
-    <!-- <iframe src="navigation_bar.php" width="100%" frameborder="0"></iframe> -->
-
     <?php require __DIR__ . '/elements/navigation_bar.php' ?>
 
-    <!-- <img src="images/logo.png" class="imglogo"> -->
     <div class="container">
         <h1><?php echo ucwords($config['table_name']) ?> Table</h1>
 

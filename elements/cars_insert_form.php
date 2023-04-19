@@ -66,4 +66,13 @@ if ($request_method === 'POST') {
     ?>
 
     <input type="submit">
+    <script>
+        const burger = document.querySelector('.burger');    
+        const navLinks = document.querySelector('.nav-links');
+
+        burger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            burger.classList.toggle('active');
+        });
+    </script>
 </form>
