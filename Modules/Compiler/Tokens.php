@@ -1,25 +1,7 @@
 <?php
 
-// -------------------------------------------------------------------------- //
-//                                Klase greške                                //
-// -------------------------------------------------------------------------- //
-
-// Parse error class, koristi se kada dođe do greške prilikom razdvajanja
-// ulaznog niza znakova na tokene
-class PandaParseError extends Exception {
-    protected int $line_number;
-    protected string $error_message;
-
-    function __construct($error_message, $line_number) {
-        $this->line_number = $line_number;
-        $this->error_message = $error_message;
-    }
-
-    public function errorMessage() {
-        return 'PandaSQL Parse error: '. $this->error_message .' on line '. $this->line_number;
-    }
-}
-
+namespace Compiler\Tokens;
+use \Errors\PandaParseError;
 
 // -------------------------------------------------------------------------- //
 //                          Generični tipovi tokena                           //
@@ -43,7 +25,7 @@ class TokenType {
     public function get_line() {
         return $this->line_number;
     }
-};
+}
 
 // Klasa koja predstavlja token koji ima neku vrijednost
 class TokenTypeValue extends TokenType {
@@ -51,6 +33,7 @@ class TokenTypeValue extends TokenType {
 
     public function __construct($type, $value, $line_number) {
         parent::__construct($type, $line_number);
+        $this->value = $value;
     }
 
     public function get_value() {
@@ -85,9 +68,9 @@ class TokenTypeString extends TokenTypeValue {
 }
 
 // Naredba ili ime predefinirane funkcije
-class TokenTypeCommand extends TokenTypeValue {
+class TokenTypeName extends TokenTypeValue {
     function __construct($value, $line_number) {
-        parent::__construct('COMMAND', $value, $line_number);
+        parent::__construct('NAME', $value, $line_number);
     }
 }
 
@@ -114,16 +97,16 @@ class TokenTypeParenthesis extends TokenType {
         parent::__construct('PARENTHESIS', $line_number);
 
         if ($value == '(') {
-            $this->parenthesis_type = 'OPEN';
+            $this->parenthesis_type = 'LEFT';
         } else if ($value == ')') {
-            $this->parenthesis_type = 'CLOSE';
+            $this->parenthesis_type = 'RIGHT';
         } else {
             throw new PandaParseError('Internal error, cannot create class for parenthesis token because spacified value is not parenthesis', __LINE__);
         }
     }
 
     function get_par_type() {
-        return $parenthesis_type;
+        return $this->parenthesis_type;
     }
 }
 
@@ -147,6 +130,19 @@ class TokenTypeSqlEnd extends TokenType {
 class TokenTypeSqlString extends TokenTypeValue {
     function __construct($value, $line_number) {
         parent::__construct('SQL_STRING', $value, $line_number);
+    }
+}
+
+class TokenTypeCommandEnd extends TokenType {
+    function __construct($line_number) {
+        parent::__construct('COMMAND_END', $line_number);
+    }
+}
+
+// Token označava kraj programa
+class TokenTypeProgramEnd extends TokenType {
+    function __construct($line_number) {
+        parent::__construct('END', $line_number);
     }
 }
 

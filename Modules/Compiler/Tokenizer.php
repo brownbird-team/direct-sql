@@ -1,5 +1,10 @@
 <?php
 
+namespace Compiler;
+use \Errors\PandaParseError;
+
+require __DIR__ . '/../../autoloader.php';
+
 // Unutar niza znakova moguće se nalaziti u jednom
 // od sljedećih prostora
 const HTML_STRING       = 0;
@@ -19,9 +24,6 @@ const IS_PARENTHESIS = "/\(|\)/";
 const QUOTE_CHARACTER = '\'';
 const ESCAPE_CHARACTER = '\\';
 const VARIABLE_START_CHARACTER = '$';
-
-// Dobavi sve potrebne klase
-require __DIR__ . '/tokenizer_classes.php';
 
 // Funkcija koja pretvara niz znakova u niz tokena
 // za kasniju obradu i pretvornu u AST
@@ -50,10 +52,12 @@ function tokenizer($input) {
 
             if ($position == SQL_QUERY_STRING) {
                 if (strlen($buffer) > 0)
-                    $tokens[] = new TokenTypeSqlString($buffer, $line_count);
+                    $tokens[] = new Tokens\TokenTypeSqlString($buffer, $line_count);
 
-                $tokens[] = new TokenTypeSqlEnd($line_count);
+                $tokens[] = new Tokens\TokenTypeSqlEnd($line_count);
             }
+
+            $tokens[] = new Tokens\TokenTypeCommandEnd($line_count);
 
             $pointer += 2;
             $buffer = '';
@@ -66,7 +70,7 @@ function tokenizer($input) {
                 $position = COMMAND_SPACE;
 
                 if (strlen($buffer) > 0) {
-                    $tokens[] = new TokenTypeHtmlString($buffer, $line_count);
+                    $tokens[] = new Tokens\TokenTypeHtmlString($buffer, $line_count);
                 }
 
                 $pointer += 2;
@@ -80,7 +84,7 @@ function tokenizer($input) {
         if ($position == COMMAND_SPACE) {
             // Ako je napisana zagrada
             if (preg_match(IS_PARENTHESIS, $ch)) {
-                $tokens[] = new TokenTypeParenthesis($ch, $line_count);
+                $tokens[] = new Tokens\TokenTypeParenthesis($ch, $line_count);
                 $pointer++;
                 continue;
             }
@@ -93,14 +97,14 @@ function tokenizer($input) {
                     $ch = $input[++$pointer];
                 }
 
-                $tokens[] = new TokenTypeCommand($buffer, $line_count);
+                $tokens[] = new Tokens\TokenTypeName($buffer, $line_count);
 
                 // Ako je napisana naredba naredba za početak upita
                 // uđi u mode za upit
                 if ($buffer == 'query') {
                     $position = SQL_QUERY_STRING;
                     $buffer = '';
-                    $tokens[] = new TokenTypeSqlStart($line_count);
+                    $tokens[] = new Tokens\TokenTypeSqlStart($line_count);
                 }
 
                 continue;
@@ -114,7 +118,7 @@ function tokenizer($input) {
                     $ch = $input[++$pointer];
                 }
 
-                $tokens[] = new TokenTypeNumber($buffer, $line_count);
+                $tokens[] = new Tokens\TokenTypeNumber($buffer, $line_count);
 
                 continue;
             }
@@ -149,7 +153,7 @@ function tokenizer($input) {
                 }
 
                 $pointer++;
-                $tokens[] = new TokenTypeString($buffer, $start_line);
+                $tokens[] = new Tokens\TokenTypeString($buffer, $start_line);
 
                 continue;
             }
@@ -168,7 +172,7 @@ function tokenizer($input) {
                 $pointer = $name_start;
 
                 if ($position == SQL_QUERY_STRING && strlen($buffer) > 0)
-                    $tokens[] = new TokenTypeSqlString($buffer, $line_count);
+                    $tokens[] = new Tokens\TokenTypeSqlString($buffer, $line_count);
                 
                 $buffer = '';
                 $ch = $input[$pointer];
@@ -178,7 +182,7 @@ function tokenizer($input) {
                     $ch = $input[++$pointer];
                 }
 
-                $tokens[] = new TokenTypeVariable($buffer, $var_type, $line_count);
+                $tokens[] = new Tokens\TokenTypeVariable($buffer, $var_type, $line_count);
 
                 $buffer = '';
                 continue;
@@ -208,27 +212,12 @@ function tokenizer($input) {
     }
 
     if (strlen($buffer) > 0) {
-        $tokens[] = new TokenTypeHtmlString($buffer, $line_count);
+        $tokens[] = new Tokens\TokenTypeHtmlString($buffer, $line_count);
     }
 
+    $tokens[] = new Tokens\TokenTypeProgramEnd($line_count);
+
     return $tokens;
-}
-
-$test_string = file_get_contents(__DIR__ . '/input.psql');
-
-try {
-    $result = tokenizer($test_string); 
-    var_dump($result);
-
-    echo "\n\n---------------------------\n\n";
-
-    echo $result[10]->get_type();
-    echo "\n";
-    echo $result[10]->get_var_type();
-
-    echo "\n\n";
-} catch (PandaParseError $e) {
-    echo $e->errorMessage() . "\n\n";
 }
 
 ?>
