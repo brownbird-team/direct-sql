@@ -1,6 +1,6 @@
 <?php
 
-namespace Functions;
+namespace Environment\Functions;
 
 class Loader {
     public static $function_array = [];

@@ -1,0 +1,46 @@
+body {
+    background-color: var(--primary-bc-color);
+    color: var(--primary-txt-color);
+}
+:root {
+    --primary-bc-color: #1F1B24;
+    --primary-txt-color: white;
+    --primary-btn-bc-color: #
+}
+.account_options{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem;
+    margin-top: 5%;
+}
+.account_options form {
+    display: flex;
+    align-self: stretch;
+}
+.acc_container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    justify-content: flex-start;
+    align-items: center;
+    border: 2px solid white;
+    border-radius: 1rem;
+    padding: 2rem 5rem;
+}
+input {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: transparent;
+    border-radius: 5px;
+    border: 1px solid white;
+    color: var(--primary-txt-color);
+    transition: border 0.3s ease-in-out;
+}
+input:focus {
+    border: 1px solid skyblue;
+}
+button {
+    padding: 1rem;
+    font-size: 20px;
+}
