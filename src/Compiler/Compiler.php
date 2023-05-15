@@ -72,12 +72,18 @@ class Compiler {
                 $content = $node->get_content();
                 $content_count = count($content);
 
+                if (!$node->get_raw())
+                    $code .= 'htmlspecialchars(';
+
                 for ($i = 0; $i < $content_count; $i++) {
                     $code .= $this->generate_code($content[$i], 'ANY');
 
                     if ($i + 1 < $content_count)
                         $code .= ' . ';
                 }
+
+                if (!$node->get_raw())
+                    $code .= ')';
 
                 return $code . ';';
 
@@ -144,7 +150,7 @@ class Compiler {
                 $code .= '$var->pop_query(); }}';
                 
                 if ($err_handle) {
-                    $code .= '} catch (SqlQueryError $e) { ';
+                    $code .= '} catch (\\Errors\\SqlQueryError $e) { ';
 
                     foreach ($node->get_error() as $error_node) {
                         $code .= $this->generate_code($error_node, 'ANY');
