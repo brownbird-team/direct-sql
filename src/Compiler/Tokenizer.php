@@ -139,12 +139,20 @@ function tokenizer($input) {
                     if ($ch == ESCAPE_CHARACTER) {
                         $ch = $input[++$pointer];
 
-                        if ($ch == ESCAPE_CHARACTER || $ch == QUOTE_CHARACTER) {
+                        // Ako je escape-an znak za kraj niza znakova zapiši
+                        // u string samo znak za kraj niza znakova
+                        if ($ch == QUOTE_CHARACTER) {
                             $buffer .= $ch;
                             $ch = $input[++$pointer];
                             continue;
                         }
+                        // Ako je escape-an bilo koji drugi znak samo u string zapiši i
+                        // taj znak i escape character, PHP će se pobrinut za ostalo
+                        $buffer .= ESCAPE_CHARACTER . $ch;
+                        $ch = $input[++$pointer];
+                        continue;
 
+                        // Više se ne koristi, nemoguće da dođe do ove greške
                         throw new PandaParseError('Character "'. $ch .'" cannot be escaped', $line_count);
                     }
 

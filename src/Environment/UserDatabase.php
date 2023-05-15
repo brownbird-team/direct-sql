@@ -4,8 +4,6 @@ namespace Environment;
 use \Errors\InternalServerError;
 use \Errors\SqlQueryError;
 
-require_once __DIR__ . '/../../config/config.php';
-
 class UserDatabase {
     private $connection;
     private $username;
@@ -14,17 +12,19 @@ class UserDatabase {
     public function __construct($user, $pass) {
         $this->username = $user;
         $this->db_password = $pass;
+
+        require_once __DIR__ . '/../../config/config.php';
+        $this->config = $config;
     }
 
     public function connect() {
-        global $config;
 
         try {
             $this->connection = new \mysqli(
-                $config['database_host'], 
-                $config['database_user_prefix'] . $this->username,
+                $this->config['database_host'], 
+                $this->config['database_user_prefix'] . $this->username,
                 $this->db_password,
-                $config['database_user_prefix'] . $this->username
+                $this->config['database_user_prefix'] . $this->username
             );
         } catch (\mysqli_sql_exception $e) {
             throw new InternalServerError('Error while connecting to user database for user "'. $this->username .'"');

@@ -4,8 +4,6 @@ namespace Compiler;
 use \Errors\PandaParseError;
 use \Environment\Functions\Loader;
 
-require __DIR__ . '/Tokenizer.php';
-
 // Commands (keywords) accepted by parser
 const CMD_PRINT     = 'print';
 const CMD_PRINTRAW  = 'printraw';
@@ -275,33 +273,32 @@ class Parser {
 
                 // Handle file sending command
                 if ($cmd === CMD_FILE) {
-
-                    $content = $this->tokens[++$this->pointer];
+                    ++$this->pointer;
 
                     if (!$this->token_is_assignable($this->pointer))
                         throw new PandaParseError('Expected assignable token, cannot send unassignable token as file', $token->get_line());
 
-                    $file_name = $this->tokens[++$this->pointer];
+                    $file_content = $this->walk('FILE');
+                    $file_name = $this->tokens[$this->pointer++];
 
                     if ($file_name->get_type() !== 'STRING')
-                        throw new PandaParseError('Filename must be spacified as STRING');
+                        throw new PandaParseError('Filename must be spacified as STRING', $token->get_line());
                     
-                    ++$this->pointer;
+                    $file_node = new Nodes\PandaFile($file_content, $file_name->get_value(), $token->get_line());
                     $this->check_command_end();
-                    return new Nodes\PandaFile($content, $file_name->get_value(), $token->get_line());
+                    return $file_node;
                 }
 
                 // Handle image link generation
                 if ($cmd === CMD_IMAGE) {
-
-                    $content = $this->tokens[++$this->pointer];
+                    ++$this->pointer;
 
                     if (!$this->token_is_assignable($this->pointer))
                         throw new PandaParseError('Expected assignable token, cannot print unassignable token as image link', $token->get_line());
                     
-                    ++$this->pointer;
+                    $image_node = new Nodes\PandaImage($this->walk('IMAGE'), $token->get_line());
                     $this->check_command_end();
-                    return new Nodes\PandaImage($content, $token->get_line());
+                    return $image_node;
                 }
 
                 // Handle variable creation
@@ -455,19 +452,5 @@ class Parser {
         return $this->ast;
     }
 };
-
-$test_string = file_get_contents(__DIR__ . '/__test_inputs__/pr_input_2.psql');
-
-try {
-    $tokens = tokenizer($test_string);
-    //var_dump($tokens);
-    $parser = new Parser;
-
-    $ast = $parser->parse($tokens);
-    var_dump($ast);
-    //echo json_encode((array)$ast);
-} catch (PandaParseError $e) {
-    echo $e->getMessage() . "\n\n";
-}
 
 ?>

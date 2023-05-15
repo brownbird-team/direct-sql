@@ -21,6 +21,10 @@ class PandaProgram {
     public function get_node(int $index) {
         return $this->program_body[$index];
     }
+    // Dobavi node na danom indexu
+    public function get_nodes() {
+        return $this->program_body;
+    }
     // Dobavi broj nodeova u programu
     public function get_length() {
         return count($this->program_body);
@@ -218,6 +222,12 @@ class PandaFunctionCall extends PandaNode {
     public function get_return_type() {
         return Loader::get_return_type($this->func_name);
     }
+    public function get_arguments() {
+        return $this->func_arguments;
+    }
+    public function get_argument_types() {
+        return Loader::get_arguments($this->func_name);
+    }
 }
 
 // Make query to MySQL database
@@ -317,6 +327,9 @@ class PandaIfElseBlock extends PandaNode {
         $this->condition = $condition;
         $this->if_body = [];
         $this->else_body = [];
+    }
+    public function get_condition() {
+        return $this->condition;
     }
     public function push_if($node) {
         $this->if_body[] = $node;
