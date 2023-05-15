@@ -13,7 +13,7 @@
     }    
     .nav-links {
         position: absolute;
-        top: 5.5rem;
+        top: 4rem;
         left: -150%;
         width: 100%;
         flex-direction: column;
@@ -30,5 +30,13 @@
     }
     .nav-links.active a::before {
         background-color: white;
+    }
+}
+@media all and (max-width:850px) {
+    .account_options {
+        flex-direction: column;
+    }
+    .acc_container {
+        margin: auto;
     }
 }

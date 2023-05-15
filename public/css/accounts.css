@@ -5,14 +5,13 @@ body {
 :root {
     --primary-bc-color: #1F1B24;
     --primary-txt-color: white;
-    --primary-btn-bc-color: #
 }
 .account_options{
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 3rem;
-    margin-top: 5%;
+    gap: 5rem;
+    margin-top: 5rem;
 }
 .account_options form {
     display: flex;
@@ -21,26 +20,41 @@ body {
 .acc_container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
     justify-content: flex-start;
     align-items: center;
-    border: 2px solid white;
-    border-radius: 1rem;
-    padding: 2rem 5rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    border-radius: 2rem;
+    padding: 2rem 8rem;
+    background-color: rgb(2, 2, 2);
+    box-shadow: 0px 0px 15px rgb(255, 255, 255, 0.2);
 }
-input {
-    width: 100%;
-    padding: 0.5rem;
-    background-color: transparent;
-    border-radius: 5px;
-    border: 1px solid white;
-    color: var(--primary-txt-color);
+.account_options input {
+    width: 150%;
+    padding: 1rem;
+    font-size: 16px;
+    background-color: rgb(20, 20, 20);
+    border-radius: 0.8rem;
+    border: 2px solid rgb(60, 60, 60);
+    color: var(--primary-txt-color);    
     transition: border 0.3s ease-in-out;
 }
-input:focus {
-    border: 1px solid skyblue;
+.account_options input:focus {
+    border: 1px solid rgb(66, 105, 245);
 }
-button {
+.account_options label {
+    color: var(--primary-txt-color);
+    font-size: 18px;
+    align-self: flex-start;
+    position: relative;
+}
+.account_options button {
+    width: 170%;
     padding: 1rem;
     font-size: 20px;
+    border: none;
+    border-radius: 1rem;
+    color: white;
+    cursor: pointer;
+    background: linear-gradient(to right, rgb(26, 105, 205), rgb(26, 155, 225));
 }

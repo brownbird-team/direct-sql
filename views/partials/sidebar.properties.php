@@ -1,6 +1,6 @@
-<?php
+<?php 
 
-CSS::include_file('login.css');
+CSS::include_file('sidebar.css');
 CSS::include_file('responsive.css');
 
 ?>
