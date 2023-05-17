@@ -1,6 +1,6 @@
 <nav class="navbar">
     <div class="logo-container">
-        <a class="logo">BrownBird Team</a>
+        <a class="logo">PandaSQL</a>
     </div>
     <ul class="nav-links">
         <li><a href="#">Home</a></li>
