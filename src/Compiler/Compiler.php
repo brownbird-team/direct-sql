@@ -9,7 +9,12 @@ require __DIR__ . '/Parser.php';
 
 class Compiler {
     private $code;
-    private $sql_depth;
+    private $sql_prepare;
+    private $sql_query_id;
+
+    private function get_new_query_id() {
+        return $sql_query_id++;
+    }
 
     private function escape_string($str) {
         // Dodaj backslash ispred svakog od navodnika u stringu
@@ -26,6 +31,10 @@ class Compiler {
     public function generate_code($node, $expected_type) {
 
         switch ($node->get_type()) {
+
+            // SQL_STRING se trenutno ponaša isto kao i string
+            case 'SQL_STRING':
+                return '\'' . $this->escape_string($node->get_value()) . '\'';
 
             case 'NUMBER':
                 return $node->get_value();
@@ -121,17 +130,20 @@ class Compiler {
                     $code .= 'try { ';
                 }
 
-                $code .= '$result_set_'. $this->sql_depth . ' = $db->query(';
+                $code .= '$result_set_'. $this->sql_depth . ' = $user_db->query(';
                 $query_body = $node->get_query();
                 $query_count = count($query_body);
 
                 for ($i = 0; $i < $query_count; $i++) {
-                    $code .= $this->generate_code($query_body[$i], 'ANY');
+                    if ($query_body[$i]->get_type() === 'SQL_STRING')
+                        $code .= $this->generate_code($query_body[$i], 'ANY');
+                    else
+                        $code .= '$user_db->escape('. $this->generate_code($query_body[$i], 'ANY') .')';
 
                     if ($i + 1 < $query_count)
                         $code .= ' . ';
                 }
-                $code .= '); if ($result_set_'. $this->sql_depth .'->num_rows === 0) { ';
+                $code .= ', '. $node->get_line() .'); if ($result_set_'. $this->sql_depth .'->num_rows === 0) { ';
                 
                 $empty_body = $node->get_empty();
                 $empty_count = count($empty_body);

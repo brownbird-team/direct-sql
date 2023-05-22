@@ -86,6 +86,22 @@ class PandaString extends PandaNode {
     }
 }
 
+// Simple SQL string node which is used to store part of SQL query
+class PandaSqlString extends PandaNode {
+    protected $value;
+
+    public function __construct(string $str, int $line) {
+        parent::__construct('SQL_STRING', $line);
+        $this->value = $str;
+    }
+    public function get_value() {
+        return $this->value;
+    }
+    public function get_length() {
+        return strlen($this->value);
+    }
+}
+
 // Simple string node
 class PandaHtml extends PandaNode {
     protected $value;

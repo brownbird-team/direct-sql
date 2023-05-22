@@ -427,10 +427,10 @@ class Parser {
             return $this->check_if_expression(new Nodes\PandaVariable($token->get_value(), $token->get_var_type(), $token->get_line()), $parent_type);
         }
 
-        // Ako je token SQL string promatraj ga kao obični string
+        // Ako je token SQL dodaj ga ko sql string node
         if ($token->get_type() === 'SQL_STRING') {
             ++$this->pointer;
-            return new Nodes\PandaString($token->get_value(), $token->get_line());
+            return new Nodes\PandaSqlString($token->get_value(), $token->get_line());
         }
         
         // Ako token ne odgovara niti jednom od poznatih vrati grešku
