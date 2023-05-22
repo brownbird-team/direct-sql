@@ -4,13 +4,14 @@
         <span></span>
         <span></span>
     </div>
+    <div class="line"></div>
     <div class="links">
-        <a href="#">Account</a>
-        <a href="#" class="active">Setting</a>
-        <a href="#">Pages</a>
-        <a href="#">PhpmyAdmin</a>
-        <a href="#">Files</a>
-        <a href="#">Report bug</a>
+        <a href=""><i class="fi fi-rr-user"></i>Account</a>
+        <a href="" class="active"><i class="fi fi-rr-settings"></i>Setting</a>
+        <a href=""><i class="fi fi-rr-file"></i>Pages</a>
+        <a href=""><i class="fi fi-rr-database"></i>PhpmyAdmin</a>
+        <a href=""><i class="fi fi-rr-folder"></i>Files</a>
+        <a href=""><i class="fi fi-rr-bug"></i>Report bug</a>
     </div>
 </div>
 <script>

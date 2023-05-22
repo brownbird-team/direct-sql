@@ -70,7 +70,6 @@ body {
     justify-self: end;
     align-self: flex-end;
 }
-.acc_container .acc_parts:nth-last-child(2) {
-    
+.acc_container .acc_parts:nth-last-child(2) {    
     margin-bottom: 2rem;
 }
