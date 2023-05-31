@@ -1,6 +1,6 @@
 -- Kreiraj sve tablice potrebne za glavni PandaSQL database
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS user (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(256) NOT NULL UNIQUE,
     email VARCHAR(256) NOT NULL UNIQUE,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_login DATETIME
 );
 
-CREATE TABLE IF NOT EXISTS invite_codes (
+CREATE TABLE IF NOT EXISTS invite_code (
     id INT PRIMARY KEY AUTO_INCREMENT,
     invite_code VARCHAR(256) NOT NULL UNIQUE,
     expires DATETIME,

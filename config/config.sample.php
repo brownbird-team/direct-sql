@@ -24,9 +24,14 @@ $config = [
     // Email other options
     'email_from'                    => 'PandaSQL Instance',
 
-    // Gravatar
+    // Gravatar settings
     'use_gravatar'                  => true,
     'default_avatar'                => 'robohash',
+
+    // Directory where to store PHP files of compiled user pages
+    // webserver user needs to have permissions to read/write in
+    // this directory, otherwise pages can not be compiled
+    'compiled_cache_dir'            => __DIR__ . '/cache',
 ];
 
 ?>

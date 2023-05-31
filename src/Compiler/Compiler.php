@@ -50,15 +50,19 @@ class Compiler {
 
             case 'VARIABLE':
                 if ($node->get_var_type() === 'GLOBAL')
-                    return '$var->get_global(\''. $node->get_name() .'\', \''. $expected_type .'\', '. $node->get_line() .')';
+                    return '$var->get_global(\''. $node->get_name() .'\', \''. $expected_type .'\', '.
+                        $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\')';
                 else
-                    return '$var->get_query(\''. $node->get_name() .'\', \''. $expected_type .'\', '. $node->get_line() .')';
+                    return '$var->get_query(\''. $node->get_name() .'\', \''. $expected_type .'\', '.
+                        $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\')';
             
             case 'VARIABLE_ASSIGN':
-                return '$var->set_global(\''. $node->get_name() .'\', '. $this->generate_code($node->get_value(), 'ANY') .', '. $node->get_line() .');';
+                return '$var->set_global(\''. $node->get_name() .'\', '. $this->generate_code($node->get_value(), 'ANY').
+                    ', '. $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\');';
             
             case 'VARIABLE_DELETE':
-                return '$var->delete_global(\''. $node->get_name() .'\', '. $node->get_line() .')';
+                return '$var->delete_global(\''. $node->get_name() .'\', '. $node->get_line() .', \''. 
+                    $this->escape_string($node->get_page()) .'\')';
 
             case 'FUNCTION':
                 $arguments = $node->get_arguments();
@@ -110,13 +114,16 @@ class Compiler {
                 return $code . '}';
 
             case 'OR':
-                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') || ('. $this->generate_code($node->get_right_operator(), 'ANY') .')';
+                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') || ('.
+                    $this->generate_code($node->get_right_operator(), 'ANY') .')';
 
             case 'AND':
-                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') && ('. $this->generate_code($node->get_right_operator(), 'ANY') .')';
+                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') && ('.
+                    $this->generate_code($node->get_right_operator(), 'ANY') .')';
             
             case 'IMAGE':
-                return 'echo \'data:image/jpg;charset=utf8;base64,\' . base64_encode('. $this->generate_code($node->get_image(), 'ANY') .')';
+                return 'echo \'data:image/jpg;charset=utf8;base64,\' . base64_encode('.
+                    $this->generate_code($node->get_image(), 'ANY') .')';
 
             case 'FILE':
                 return '$env->send_file('. $this->generate_code($node->get_file_content(), 'ANY') .', \'' . $node->get_file_name() .'\');';
@@ -143,7 +150,8 @@ class Compiler {
                     if ($i + 1 < $query_count)
                         $code .= ' . ';
                 }
-                $code .= ', '. $node->get_line() .'); if ($result_set_'. $this->sql_depth .'->num_rows === 0) { ';
+                $code .= ', '. $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\');'.
+                    ' if ($result_set_'. $this->sql_depth .'->num_rows === 0) { ';
                 
                 $empty_body = $node->get_empty();
                 $empty_count = count($empty_body);
@@ -196,10 +204,17 @@ class Compiler {
 
 $test_string = file_get_contents(__DIR__ . '/__test_inputs__/cp_input_2.psql');
 
+$callback = function ($name) {
+    $code_str = "<h1>Page $name has been required</h1>";
+    $tokenizer = new Tokenizer($name);
+    return $tokenizer->tokenize($code_str);
+};
+
 try {
-    $tokens = tokenizer($test_string);
+    $tokenizer = new Tokenizer('test-page');
+    $tokens = $tokenizer->tokenize($test_string);
     //var_dump($tokens);
-    $parser = new Parser;
+    $parser = new Parser($callback);
 
     $ast = $parser->parse($tokens);
     //var_dump($ast);

@@ -10,7 +10,7 @@ class VariableControl {
     private $global_vars; // Lista globalnih varijabli
 
     // Provjeri je li dana varijabla danog tipa
-    private function check_type($var, $type, $line) {
+    private function check_type($var, $type, $line, $page) {
         $vtype = gettype($var);
 
         switch ($type) {
@@ -26,9 +26,9 @@ class VariableControl {
                 ) return; break;
 
             case 'NONE':
-                throw new PandaExecuteError('Variable cannot have value of "NONE" (THIS IS SYSTEM ERROR, REPORT TO ADMIN)', $line);
+                throw new PandaExecuteError('Variable cannot have value of "NONE" (THIS IS SYSTEM ERROR, REPORT TO ADMIN)', $line, $page);
             default:
-                throw new PandaExecuteError('Given variable type does not exist (THIS IS SYSTEM ERROR, REPORT TO ADMIN)', $line);
+                throw new PandaExecuteError('Given variable type does not exist (THIS IS SYSTEM ERROR, REPORT TO ADMIN)', $line, $page);
         }
 
         throw new PandaExecuteError('Variable of wrong type used', $line);
@@ -46,16 +46,16 @@ class VariableControl {
     }
 
     // Dobavi query varijablu i provjeri je li odgovarajućeg tipa
-    public function get_query(string $name, string $type, int $line) {
+    public function get_query(string $name, string $type, int $line, string $page) {
 
         for ($i = $this->next_query - 1; $i >= 0; $i--) {
             if (isset($this->query_stack[$i][$name])) {
-                $this->check_type($this->query_stack[$i][$name], $type, $line);
+                $this->check_type($this->query_stack[$i][$name], $type, $line, $page);
                 return $this->query_stack[$i][$name];
             }
         }
 
-        throw new PandaExecuteError('Trying to access value of non-existent QUERY variable $$'. $name, $line);
+        throw new PandaExecuteError('Trying to access value of non-existent QUERY variable $$'. $name, $line, $page);
     }
 
     // Izbaci zadnji dodani array varijabli
@@ -64,25 +64,25 @@ class VariableControl {
     }
 
     // Dodaj globalnu varijablu
-    public function set_global(string $name, $value, int $line) {
+    public function set_global(string $name, $value, int $line, string $page) {
         $this->global_vars[$name] = $value;
     }
 
     // Pobriši globalnu varijablu
-    public function delete_global(string $name, int $line) {
+    public function delete_global(string $name, int $line, string $page) {
         if (!isset($this->global_vars[$name]))
-            throw new PandaExecuteError('Trying to delete non-existent GLOBAL variable $'. $name, $line);
+            throw new PandaExecuteError('Trying to delete non-existent GLOBAL variable $'. $name, $line, $page);
 
         unset($this->global_vars[$name]);
     }
 
     // Dobavi globalnu varijablu i provjeri je li odgovarajućeg tipa
-    public function get_global(string $name, string $type, int $line) {
+    public function get_global(string $name, string $type, int $line, string $page) {
 
         if (!isset($this->global_vars[$name]))
-            throw new PandaExecuteError('Trying to access value of non-existent GLOBAL variable $'. $name, $line);
+            throw new PandaExecuteError('Trying to access value of non-existent GLOBAL variable $'. $name, $line, $page);
 
-        $this->check_type($this->global_vars[$name], $type, $line);
+        $this->check_type($this->global_vars[$name], $type, $line, $page);
 
         return $this->global_vars[$name];
     }

@@ -13,24 +13,26 @@ class DB {
         }
     }
 
-    public function run($sql, $args = null, $line = null) {
+    public function run($sql, $args = null, $line = null, $page = null) {
         try {
             if (!$args)
                 return $this->con->query($sql);
 
             $stmt = $this->con->prepare($sql);
             $stmt->execute($args);
-            return $stmt->get_result();
+            $result = $stmt->get_result();
+            $stmt->close();
+            return $result;
         } catch (\mysqli_sql_exception $e) {
-            throw new \Errors\SqlQueryError($e, $line);
+            throw new \Errors\SqlQueryError($e, $line, $page);
         }
     }
 
-    public function query($sql, $line = null) {
+    public function query($sql, $line = null, $page = null) {
         try {
             return $this->con->query($sql);
         } catch (\mysqli_sql_exception $e) {
-            throw new \Errors\SqlQueryError($e, $line);
+            throw new \Errors\SqlQueryError($e, $line, $page);
         }
     }
 
