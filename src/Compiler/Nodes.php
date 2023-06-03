@@ -44,10 +44,12 @@ class PandaProgram {
 class PandaNode {
     protected $node_type;
     protected $line_number;
+    protected $page_name;
 
-    public function __construct(string $type, int $line) {
+    public function __construct(string $type, int $line, string $page) {
         $this->node_type = $type;
         $this->line_number = $line;
+        $this->page_name = $page;
     }
     public function get_line() {
         return $this->line_number;
@@ -55,14 +57,17 @@ class PandaNode {
     public function get_type() {
         return $this->node_type;
     }
+    public function get_page() {
+        return $this->page_name;
+    }
 }
 
 // Simple number node (currently only ints are suppored)
 class PandaNumber extends PandaNode {
     protected $value;
 
-    public function __construct(int $num, int $line) {
-        parent::__construct('NUMBER', $line);
+    public function __construct(int $num, int $line, string $page) {
+        parent::__construct('NUMBER', $line, $page);
         $this->value = $num;
     }
     public function get_value() {
@@ -74,8 +79,24 @@ class PandaNumber extends PandaNode {
 class PandaString extends PandaNode {
     protected $value;
 
-    public function __construct(string $str, int $line) {
-        parent::__construct('STRING', $line);
+    public function __construct(string $str, int $line, string $page) {
+        parent::__construct('STRING', $line, $page);
+        $this->value = $str;
+    }
+    public function get_value() {
+        return $this->value;
+    }
+    public function get_length() {
+        return strlen($this->value);
+    }
+}
+
+// Simple SQL string node which is used to store part of SQL query
+class PandaSqlString extends PandaNode {
+    protected $value;
+
+    public function __construct(string $str, int $line, string $page) {
+        parent::__construct('SQL_STRING', $line, $page);
         $this->value = $str;
     }
     public function get_value() {
@@ -90,8 +111,8 @@ class PandaString extends PandaNode {
 class PandaHtml extends PandaNode {
     protected $value;
 
-    public function __construct(string $str, int $line) {
-        parent::__construct('HTML_STRING', $line);
+    public function __construct(string $str, int $line, string $page) {
+        parent::__construct('HTML_STRING', $line, $page);
         $this->value = $str;
     }
     public function get_value() {
@@ -104,8 +125,8 @@ class PandaHtml extends PandaNode {
 
 // Simple NULL node
 class PandaNull extends PandaNode {
-    public function __construct(int $line) {
-        parent::__construct('NULL', $line);
+    public function __construct(int $line, string $page) {
+        parent::__construct('NULL', $line, $page);
     }
 }
 
@@ -114,8 +135,8 @@ class PandaVariable extends PandaNode {
     protected $name;
     protected $var_type;
 
-    public function __construct(string $name, string $var_type, int $line) {
-        parent::__construct('VARIABLE', $line);
+    public function __construct(string $name, string $var_type, int $line, string $page) {
+        parent::__construct('VARIABLE', $line, $page);
         $this->name = $name;
         $this->var_type = $var_type;
     }
@@ -132,8 +153,8 @@ class PandaVariableAssign extends PandaNode {
     protected $name;
     protected $value;
 
-    public function __construct(string $name, $value, int $line) {
-        parent::__construct('VARIABLE_ASSIGN', $line);
+    public function __construct(string $name, $value, int $line, string $page) {
+        parent::__construct('VARIABLE_ASSIGN', $line, $page);
         $this->name = $name;
         $this->value = $value;
     }
@@ -149,8 +170,8 @@ class PandaVariableAssign extends PandaNode {
 class PandaVariableDelete extends PandaNode {
     protected $name;
 
-    public function __construct(string $name, int $line) {
-        parent::__construct('VARIABLE_DELETE', $line);
+    public function __construct(string $name, int $line, string $page) {
+        parent::__construct('VARIABLE_DELETE', $line, $page);
         $this->name = $name;
     }
     public function get_name() {
@@ -163,8 +184,8 @@ class PandaFunctionCall extends PandaNode {
     protected $func_name;
     protected $func_arguments;
 
-    public function __construct(string $name, array $arguments, int $line) {
-        parent::__construct('FUNCTION', $line);
+    public function __construct(string $name, array $arguments, int $line, string $page) {
+        parent::__construct('FUNCTION', $line, $page);
 
         // Ako dana funkcija postoji
         if (Loader::exists($name)) {
@@ -238,8 +259,8 @@ class PandaSqlQuery extends PandaNode {
     protected $error;         // Executed if error occures
     protected $handle_error;  // Should error be handled with error block or throwed to user
 
-    public function __construct(int $line) {
-        parent::__construct('SQL_QUERY', $line);
+    public function __construct(int $line, string $page) {
+        parent::__construct('SQL_QUERY', $line, $page);
 
         $this->query = [];
         $this->body = [];
@@ -285,8 +306,8 @@ class PandaSqlQuery extends PandaNode {
 class PandaImage extends PandaNode {
     protected $image;
 
-    public function __construct($image, int $line) {
-        parent::__construct('IMAGE', $line);
+    public function __construct($image, int $line, string $page) {
+        parent::__construct('IMAGE', $line, $page);
         $this->image = $image;
     }
     public function get_image() {
@@ -301,8 +322,8 @@ class PandaFile extends PandaNode {
     protected $file;
     protected $file_name;
 
-    public function __construct($file, string $file_name, int $line) {
-        parent::__construct('FILE', $line);
+    public function __construct($file, string $file_name, int $line, string $page) {
+        parent::__construct('FILE', $line, $page);
         $this->file = $file;
         $this->file_name = $file_name;
 
@@ -321,8 +342,8 @@ class PandaIfElseBlock extends PandaNode {
     protected $if_body;
     protected $else_body;
 
-    public function __construct($condition, int $line) {
-        parent::__construct('IF_ELSE', $line);
+    public function __construct($condition, int $line, string $page) {
+        parent::__construct('IF_ELSE', $line, $page);
 
         $this->condition = $condition;
         $this->if_body = [];
@@ -350,8 +371,8 @@ class PandaLogicalOr extends PandaNode {
     protected $left;
     protected $right;
 
-    public function __construct($left, $right, int $line) {
-        parent::__construct('OR', $line);
+    public function __construct($left, $right, int $line, string $page) {
+        parent::__construct('OR', $line, $page);
         $this->left = $left;
         $this->right = $right;
     }
@@ -368,8 +389,8 @@ class PandaLogicalAnd extends PandaNode {
     protected $left;
     protected $right;
 
-    public function __construct($left, $right, int $line) {
-        parent::__construct('AND', $line);
+    public function __construct($left, $right, int $line, string $page) {
+        parent::__construct('AND', $line, $page);
         $this->left = $left;
         $this->right = $right;
     }
@@ -386,8 +407,8 @@ class PandaPrint extends PandaNode {
     protected $content;
     protected $print_raw;
 
-    public function __construct(int $line) {
-        parent::__construct('PRINT', $line);
+    public function __construct(int $line, string $page) {
+        parent::__construct('PRINT', $line, $page);
         $this->content = [];
         $this->print_raw = false;
     }

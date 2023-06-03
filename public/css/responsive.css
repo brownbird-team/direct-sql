@@ -36,7 +36,7 @@
     .account_options {
         flex-direction: column;
     }
-    .acc_container {
+    .account_options form {
         margin: auto;
     }
 }

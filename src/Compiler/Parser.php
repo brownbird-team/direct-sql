@@ -15,6 +15,7 @@ const CMD_ENDIF     = 'endif';
 const CMD_FILE      = 'file';
 const CMD_SET       = 'set';
 const CMD_DELETE    = 'delete';
+const CMD_REQUIRE   = 'require';
 
 // Podkomande naredbe SQL
 const SUBCMD_SQL_QUERY    = 'query';
@@ -37,6 +38,13 @@ class Parser {
     private $ast;                        // Abstraktno sintaksno drvo !
     private $variables_table = [];       // Lista svih (GLOBALNIH) varijabli koje su deklarirane
     private $in_expression = false;      // Check if we already entered expression
+    private $require_callback;           // Callback funkcija koja se poziva kako bi dobavila tokene require-ani page
+    private $required_stack;             // Svi page-vi koji su bili require-ani da bi došli do ovog
+    private $dependency_array;           // Lista id-eva svih stranica o kojima ova ovisi direktno ili indirektno
+
+    public function __construct($require_callback) {
+        $this->require_callback = $require_callback;
+    }
 
     // Check if variable exists in variable table
     private function variable_exists(string $name) {
@@ -91,7 +99,7 @@ class Parser {
                 ++$this->pointer;
                 $this->in_expression = true;
                 
-                $exp = new Nodes\PandaLogicalOr($current_node, $this->walk($parent_type), $token->get_line());
+                $exp = new Nodes\PandaLogicalOr($current_node, $this->walk($parent_type), $token->get_line(), $token->get_page());
                 
                 $this->in_expression = false;
                 return $this->check_if_expression($exp, $parent_type);
@@ -100,7 +108,7 @@ class Parser {
                 ++$this->pointer;
                 $this->in_expression = true;
                 
-                $exp = new Nodes\PandaLogicalAnd($current_node, $this->walk($parent_type), $token->get_line());
+                $exp = new Nodes\PandaLogicalAnd($current_node, $this->walk($parent_type), $token->get_line(), $token->get_page());
                 
                 $this->in_expression = false;
                 return $this->check_if_expression($exp, $parent_type);
@@ -115,23 +123,32 @@ class Parser {
         $token = $this->tokens[$this->pointer++];
         // Throw error if current token is not end of this command
         if ($token->get_type() !== 'COMMAND_END')
-            throw new PandaParseError('Expected %} but found unexpected token', $token->get_line());
+            throw new PandaParseError('Expected %} but found unexpected token', $token->get_line(), $token->get_page());
     }
 
     // Rekurzivna funkcija koja kreira AST od tokena
     private function walk($parent_type) {
 
+        // Ako su svi page-vi sa stacka odrađeni (došli do END-a)
+        // došli smo do kraja programa tako da vrati null
+        if (count($this->require_stack) === 0) {
+            return null;
+        }
+
         $token = $this->tokens[$this->pointer];
 
-        // Ako je ovo kraj programa vrati null
+        // Ako je ovo kraj jednog page-a (required program) izbaci ga iz
+        // require stoga
         if ($token->get_type() === 'END') {
-            return null;
+            ++$this->pointer;
+            array_pop($this->require_stack);
+            return $this->walk($parent_type);
         }
 
         // Ako je token komad HTML-a
         if ($token->get_type() === 'HTML_STRING') {
             ++$this->pointer;
-            return new Nodes\PandaHtml($token->get_value(), $token->get_line());
+            return new Nodes\PandaHtml($token->get_value(), $token->get_line(), $token->get_page());
         }
 
         // Ako je tip tokena NAME
@@ -141,10 +158,48 @@ class Parser {
                 // Koja naredba je navedena
                 $cmd = $token->get_value();
 
+                // Handle command include
+                if ($cmd === CMD_REQUIRE) {
+                    $token = $this->tokens[++$this->pointer];
+
+                    // Naziv stranice koju treba uključiti mora biti string
+                    if ($token->get_type() !== 'STRING')
+                        throw new PandaParseError('Required page name must be specified as string', $token->get_line(), $token->get_page());
+
+                    // Naziv stranice ne smije biti prazan string
+                    if ($token->get_value() === '')
+                        throw new PandaParseError('Page name cannot be empty string', $token->get_line(), $token->get_page());
+
+                    // Naziv stranice ne smije već postojati u require stogu jer to znači da je
+                    // cirkularni dependency pronađen
+                    if (in_array($token->get_value(), $this->require_stack))
+                        throw new PandaParseError('Circular dependency found', $token->get_line(), $token->get_page());
+
+                    // Inače ako je za sada sve OK zatraži tokene za dani page
+                    // pomoću callback funkcije
+                    $other_page_data = call_user_func($this->require_callback, $token->get_value());
+
+                    // Ako dani page ne postoji vrati grešku
+                    if ($other_page_data === null)
+                        throw new PandaParseError('Required page "'. $token->get_value() .'" does not exist or is not requirable', $token->get_line(), $token->get_page());
+                    
+                    ++$this->pointer;
+                    $this->check_command_end();
+                    // Dodaj ovaj page u require stack
+                    $this->require_stack[] = $other_page_data['tokens'][0]->get_page();
+                    // Dodaj id ovog page-a u dependency array
+                    if (!in_array($other_page_data['id'], $this->dependency_array))
+                        $this->dependency_array[] = $other_page_data['id'];
+                    // Ubaci tokene u array
+                    array_splice($this->tokens, $this->pointer, 0, $other_page_data['tokens']);
+                    // Obradi sljedeći token
+                    return $this->walk($parent_type);
+                }
+
                 // Handle commands print and printraw
                 if ($cmd === CMD_PRINT || $cmd === CMD_PRINTRAW) {
                     
-                    $print_node = new Nodes\PandaPrint($token->get_line());
+                    $print_node = new Nodes\PandaPrint($token->get_line(), $token->get_page());
 
                     if ($cmd === CMD_PRINTRAW)
                         $print_node->set_raw(true);
@@ -171,11 +226,11 @@ class Parser {
                 // Handle all SQL subcommands
                 if ($cmd === CMD_SQL) {
 
-                    $sql_node = new Nodes\PandaSqlQuery($token->get_line());
+                    $sql_node = new Nodes\PandaSqlQuery($token->get_line(), $token->get_page());
                     $sub_cmd = $this->tokens[++$this->pointer];
 
                     if ($sub_cmd->get_type() !== 'NAME' || $sub_cmd->get_value() !== SUBCMD_SQL_QUERY)
-                        throw new PandaParseError('Unexpected SQL subcommand found', $token->get_line());
+                        throw new PandaParseError('Unexpected SQL subcommand found', $token->get_line(), $token->get_page());
 
                     $this->pointer += 2;
 
@@ -193,7 +248,7 @@ class Parser {
                             break;
                         }
                         
-                        throw new PandaParseError('SQL query can only contain SQL code and variables', $token->get_line());
+                        throw new PandaParseError('SQL query can only contain SQL code and variables', $token->get_line(), $token->get_page());
                     }
 
                     $sql_area = 'BODY';
@@ -223,7 +278,7 @@ class Parser {
                         }
 
                         if ($token->get_type() === 'END')
-                            throw new PandaParseError('All SQL blocks need to end with "{% sql end %}", never-ending block found', $sql_node->get_line());
+                            throw new PandaParseError('All SQL blocks need to end with "{% sql end %}", never-ending block found', $sql_node->get_line(), $token->get_page());
 
                         if ($sql_area === 'BODY')
                             $sql_node->push_body($this->walk($sql_node->get_type()));
@@ -244,7 +299,7 @@ class Parser {
                     $this->check_command_end();
 
                     $if_area = 'IF';
-                    $if_node = new Nodes\PandaIfElseBlock($condition_node, $token->get_line());
+                    $if_node = new Nodes\PandaIfElseBlock($condition_node, $token->get_line(), $token->get_page());
 
                     while (true) {
                         $token = $this->tokens[$this->pointer];
@@ -276,15 +331,15 @@ class Parser {
                     ++$this->pointer;
 
                     if (!$this->token_is_assignable($this->pointer))
-                        throw new PandaParseError('Expected assignable token, cannot send unassignable token as file', $token->get_line());
+                        throw new PandaParseError('Expected assignable token, cannot send unassignable token as file', $token->get_line(), $token->get_page());
 
                     $file_content = $this->walk('FILE');
                     $file_name = $this->tokens[$this->pointer++];
 
                     if ($file_name->get_type() !== 'STRING')
-                        throw new PandaParseError('Filename must be spacified as STRING', $token->get_line());
+                        throw new PandaParseError('Filename must be spacified as STRING', $token->get_line(), $token->get_page());
                     
-                    $file_node = new Nodes\PandaFile($file_content, $file_name->get_value(), $token->get_line());
+                    $file_node = new Nodes\PandaFile($file_content, $file_name->get_value(), $token->get_line(), $token->get_page());
                     $this->check_command_end();
                     return $file_node;
                 }
@@ -294,9 +349,9 @@ class Parser {
                     ++$this->pointer;
 
                     if (!$this->token_is_assignable($this->pointer))
-                        throw new PandaParseError('Expected assignable token, cannot print unassignable token as image link', $token->get_line());
+                        throw new PandaParseError('Expected assignable token, cannot print unassignable token as image link', $token->get_line(), $token->get_page());
                     
-                    $image_node = new Nodes\PandaImage($this->walk('IMAGE'), $token->get_line());
+                    $image_node = new Nodes\PandaImage($this->walk('IMAGE'), $token->get_line(), $token->get_page());
                     $this->check_command_end();
                     return $image_node;
                 }
@@ -307,19 +362,19 @@ class Parser {
                     $var = $this->tokens[++$this->pointer];
 
                     if ($var->get_type() !== 'VARIABLE')
-                        throw new PandaParseError('You cannot assign value to anything but variable', $token->get_line());
+                        throw new PandaParseError('You cannot assign value to anything but variable', $token->get_line(), $token->get_page());
                     if ($var->get_var_type() === 'QUERY')
-                        throw new PandaParseError('You cannot assign value to QUERY variable', $token->get_line());
+                        throw new PandaParseError('You cannot assign value to QUERY variable', $token->get_line(), $token->get_page());
 
                     $content = $this->tokens[++$this->pointer];
 
                     if (!$this->token_is_assignable($this->pointer))
-                        throw new PandaParseError('Expected assignable token, cannot assign unassignable token to variable', $token->get_line());
+                        throw new PandaParseError('Expected assignable token, cannot assign unassignable token to variable', $token->get_line(), $token->get_page());
                     
                     ++$this->pointer;
                     $this->check_command_end();
                     $this->add_variable($var->get_value());
-                    return new Nodes\PandaVariableAssign($var->get_value(), $content, $token->get_line());
+                    return new Nodes\PandaVariableAssign($var->get_value(), $content, $token->get_line(), $token->get_page());
                 }
 
                 // Handle variable deletion
@@ -328,16 +383,16 @@ class Parser {
                     $var = $this->tokens[++$this->pointer];
 
                     if ($var->get_type() !== 'VARIABLE')
-                        throw new PandaParseError('You cannot delete anything but variable', $token->get_line());
+                        throw new PandaParseError('You cannot delete anything but variable', $token->get_line(), $token->get_page());
                     if ($var->get_var_type() === 'QUERY')
-                        throw new PandaParseError('You cannot delete QUERY variable', $token->get_line());
+                        throw new PandaParseError('You cannot delete QUERY variable', $token->get_line(), $token->get_page());
                     if (!$this->variable_exists($var->get_value()))
-                        throw new PandaParseError('Cannot delete variable $'. $var->get_value() .' (variable is not set)', $token->get_line());
+                        throw new PandaParseError('Cannot delete variable $'. $var->get_value() .' (variable is not set)', $token->get_line(), $token->get_page());
                     
                     ++$this->pointer;
                     $this->check_command_end();
                     $this->delete_variable($var->get_value());
-                    return new Nodes\PandaVariableDelete($var->get_value(), $token->get_line());
+                    return new Nodes\PandaVariableDelete($var->get_value(), $token->get_line(), $token->get_page());
                 }
 
             // Ako se nalazi bilo gdje drugdje trebala bi biti riječ o funkciji (osim ak nisam neš fulo)
@@ -365,15 +420,15 @@ class Parser {
                         }
                         if ($token->get_type() === 'PARENTHESIS' && $token->get_par_type() === 'RIGHT') {
                             ++$this->pointer;
-                            return $this->check_if_expression(new Nodes\PandaFunctionCall($func_token->get_value(), $attributes, $func_token->get_line()), $parent_type);
+                            return $this->check_if_expression(new Nodes\PandaFunctionCall($func_token->get_value(), $attributes, $func_token->get_line(), $token->get_page()), $parent_type);
                         }
-                        throw new PandaParseError('Unexpected token near function '. $func_token->get_value() .'(...), expected ")"', $func_token->get_line());
+                        throw new PandaParseError('Unexpected token near function '. $func_token->get_value() .'(...), expected ")"', $func_token->get_line(), $token->get_page());
                     }
                 }
                 // Ako nije funkcija mogo bi bit null
                 if ($token->get_value() === KEYWORD_NULL) {
                     ++$this->pointer;
-                    return $this->check_if_expression(new Nodes\PandaNull($token->get_line()), $parent_type);
+                    return $this->check_if_expression(new Nodes\PandaNull($token->get_line(), $token->get_page()), $parent_type);
                 }
                 // Ako nije funkcija ni null pusti da baci unexpected token na kraju ...
             }
@@ -383,7 +438,7 @@ class Parser {
         // na početku naredbe nakon {% znaka jer se tamo očekuje naredba
         if ($parent_type === 'PROGRAM' || $parent_type === 'SQL_QUERY' || $parent_type === 'IF_ELSE') {
             var_dump($token);
-            throw new PandaParseError('You must start command with valid command name', $token->get_line());
+            throw new PandaParseError('You must start command with valid command name', $token->get_line(), $token->get_page());
         }
 
         // Ako je token otvorena zagrada
@@ -397,7 +452,7 @@ class Parser {
 
             $token = $this->tokens[$this->pointer];
             if ($token->get_type() !== 'PARENTHESIS' || $token->get_par_type() !== 'RIGHT')
-                throw new PandaParseError('Failed to find matcing ")" for "(" token', $start_line);
+                throw new PandaParseError('Failed to find matcing ")" for "(" token', $start_line, $token->get_page());
             
             ++$this->pointer;
             $this->in_expression = $previous_expression_state;
@@ -407,13 +462,13 @@ class Parser {
         // Ako je tip tokena number, vrati number node
         if ($token->get_type() === 'NUMBER') {
             ++$this->pointer;
-            return $this->check_if_expression(new Nodes\PandaNumber($token->get_value(), $token->get_line()), $parent_type);
+            return $this->check_if_expression(new Nodes\PandaNumber($token->get_value(), $token->get_line(), $token->get_page()), $parent_type);
         }
 
         // Ako je tip tokena string, vrati seting node
         if ($token->get_type() === 'STRING') {
             ++$this->pointer;
-            return $this->check_if_expression(new Nodes\PandaString($token->get_value(), $token->get_line()), $parent_type);
+            return $this->check_if_expression(new Nodes\PandaString($token->get_value(), $token->get_line(), $token->get_page()), $parent_type);
         }
 
         // Ako je tip tokena varijabla, vrati varijabla node
@@ -422,23 +477,27 @@ class Parser {
 
             // Ako dana globalna varijabla ne postoji vrati grešku
             if ($token->get_var_type() === 'GLOBAL' && !$this->variable_exists($token->get_value()))
-                throw new PandaParseError('Trying to access value of non-existent GLOBAL variable $'. $token->get_value(), $token->get_line());
+                throw new PandaParseError('Trying to access value of non-existent GLOBAL variable $'. $token->get_value(), $token->get_line(), $token->get_page());
 
-            return $this->check_if_expression(new Nodes\PandaVariable($token->get_value(), $token->get_var_type(), $token->get_line()), $parent_type);
+            return $this->check_if_expression(new Nodes\PandaVariable($token->get_value(), $token->get_var_type(), $token->get_line(), $token->get_page()), $parent_type);
         }
 
-        // Ako je token SQL string promatraj ga kao obični string
+        // Ako je token SQL dodaj ga ko sql string node
         if ($token->get_type() === 'SQL_STRING') {
             ++$this->pointer;
-            return new Nodes\PandaString($token->get_value(), $token->get_line());
+            return new Nodes\PandaSqlString($token->get_value(), $token->get_line(), $token->get_page());
         }
         
         // Ako token ne odgovara niti jednom od poznatih vrati grešku
-        throw new PandaParseError('Unexpected token of type "'. $token->get_type() .'" found', $token->get_line());
+        throw new PandaParseError('Unexpected token of type "'. $token->get_type() .'" found', $token->get_line(), $token->get_page());
     }
 
     // Kreiraj instancu klase program i započni parasnje
     public function parse($tokens) {
+
+        $this->require_stack = [ $tokens[0]->get_page() ];
+        $this->dependency_array = [];
+
         $this->pointer = 0;
         $this->tokens = $tokens;
         $this->token_count = count($tokens);
@@ -450,6 +509,10 @@ class Parser {
         }
 
         return $this->ast;
+    }
+
+    public function get_dependencies() {
+        return $this->dependency_array;
     }
 };
 

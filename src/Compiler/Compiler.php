@@ -9,7 +9,12 @@ require __DIR__ . '/Parser.php';
 
 class Compiler {
     private $code;
-    private $sql_depth;
+    private $sql_prepare;
+    private $sql_query_id;
+
+    private function get_new_query_id() {
+        return $sql_query_id++;
+    }
 
     private function escape_string($str) {
         // Dodaj backslash ispred svakog od navodnika u stringu
@@ -27,6 +32,10 @@ class Compiler {
 
         switch ($node->get_type()) {
 
+            // SQL_STRING se trenutno ponaša isto kao i string
+            case 'SQL_STRING':
+                return '\'' . $this->escape_string($node->get_value()) . '\'';
+
             case 'NUMBER':
                 return $node->get_value();
 
@@ -41,15 +50,19 @@ class Compiler {
 
             case 'VARIABLE':
                 if ($node->get_var_type() === 'GLOBAL')
-                    return '$var->get_global(\''. $node->get_name() .'\', \''. $expected_type .'\', '. $node->get_line() .')';
+                    return '$var->get_global(\''. $node->get_name() .'\', \''. $expected_type .'\', '.
+                        $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\')';
                 else
-                    return '$var->get_query(\''. $node->get_name() .'\', \''. $expected_type .'\', '. $node->get_line() .')';
+                    return '$var->get_query(\''. $node->get_name() .'\', \''. $expected_type .'\', '.
+                        $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\')';
             
             case 'VARIABLE_ASSIGN':
-                return '$var->set_global(\''. $node->get_name() .'\', '. $this->generate_code($node->get_value(), 'ANY') .', '. $node->get_line() .');';
+                return '$var->set_global(\''. $node->get_name() .'\', '. $this->generate_code($node->get_value(), 'ANY').
+                    ', '. $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\');';
             
             case 'VARIABLE_DELETE':
-                return '$var->delete_global(\''. $node->get_name() .'\', '. $node->get_line() .')';
+                return '$var->delete_global(\''. $node->get_name() .'\', '. $node->get_line() .', \''. 
+                    $this->escape_string($node->get_page()) .'\')';
 
             case 'FUNCTION':
                 $arguments = $node->get_arguments();
@@ -101,13 +114,16 @@ class Compiler {
                 return $code . '}';
 
             case 'OR':
-                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') || ('. $this->generate_code($node->get_right_operator(), 'ANY') .')';
+                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') || ('.
+                    $this->generate_code($node->get_right_operator(), 'ANY') .')';
 
             case 'AND':
-                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') && ('. $this->generate_code($node->get_right_operator(), 'ANY') .')';
+                return '('. $this->generate_code($node->get_left_operator(), 'ANY') .') && ('.
+                    $this->generate_code($node->get_right_operator(), 'ANY') .')';
             
             case 'IMAGE':
-                return 'echo \'data:image/jpg;charset=utf8;base64,\' . base64_encode('. $this->generate_code($node->get_image(), 'ANY') .')';
+                return 'echo \'data:image/jpg;charset=utf8;base64,\' . base64_encode('.
+                    $this->generate_code($node->get_image(), 'ANY') .')';
 
             case 'FILE':
                 return '$env->send_file('. $this->generate_code($node->get_file_content(), 'ANY') .', \'' . $node->get_file_name() .'\');';
@@ -121,17 +137,21 @@ class Compiler {
                     $code .= 'try { ';
                 }
 
-                $code .= '$result_set_'. $this->sql_depth . ' = $db->query(';
+                $code .= '$result_set_'. $this->sql_depth . ' = $user_db->query(';
                 $query_body = $node->get_query();
                 $query_count = count($query_body);
 
                 for ($i = 0; $i < $query_count; $i++) {
-                    $code .= $this->generate_code($query_body[$i], 'ANY');
+                    if ($query_body[$i]->get_type() === 'SQL_STRING')
+                        $code .= $this->generate_code($query_body[$i], 'ANY');
+                    else
+                        $code .= '$user_db->escape('. $this->generate_code($query_body[$i], 'ANY') .')';
 
                     if ($i + 1 < $query_count)
                         $code .= ' . ';
                 }
-                $code .= '); if ($result_set_'. $this->sql_depth .'->num_rows === 0) { ';
+                $code .= ', '. $node->get_line() .', \''. $this->escape_string($node->get_page()) .'\');'.
+                    ' if ($result_set_'. $this->sql_depth .'->num_rows === 0) { ';
                 
                 $empty_body = $node->get_empty();
                 $empty_count = count($empty_body);
@@ -184,10 +204,17 @@ class Compiler {
 
 $test_string = file_get_contents(__DIR__ . '/__test_inputs__/cp_input_2.psql');
 
+$callback = function ($name) {
+    $code_str = "<h1>Page $name has been required</h1>";
+    $tokenizer = new Tokenizer($name);
+    return $tokenizer->tokenize($code_str);
+};
+
 try {
-    $tokens = tokenizer($test_string);
+    $tokenizer = new Tokenizer('test-page');
+    $tokens = $tokenizer->tokenize($test_string);
     //var_dump($tokens);
-    $parser = new Parser;
+    $parser = new Parser($callback);
 
     $ast = $parser->parse($tokens);
     //var_dump($ast);
