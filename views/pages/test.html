@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../../public/css/pages.css">
+    <link rel="stylesheet" href="../../public/css/files.css">
+    <link rel="stylesheet" href="../../public/css/responsive.css">
     <title>Document</title>
 </head>
 <body>
     <div class="pages-container">
         <div class="info">
-            <h1>Pages</h1>
-            <button>Add new</button>
+            <h1>Files</h1>
+            <button>Add file</button>
         </div>
         <div class="pages-options">
-            <div class="option">
+            <div class="options">
                 <h2>Home</h2>
                 <h2>view</h2>
                 <div class="opener">
@@ -24,8 +25,28 @@
             </div>            
             <div class="pages-data">
                 <div class="inputs">
-                    <p>New name for your page: </p>
-                    <input type="text" placeholder="New name:">
+                    <p>Name of your file: </p>
+                    <input type="text" placeholder="Name:">
+                </div>
+                <div class="inputs">
+                    <div class="input-dp">
+                        <div class="dp-btn">
+                            <p>test</p>
+                            <div class="opener-sml">
+                                <div class="line1"></div>
+                                <div class="line2"></div>
+                            </div>
+                        </div>
+                        <div class="dp-content">
+                            <p>.css</p>
+                            <p>.html</p>
+                            <p>.php</p>
+                        </div>
+                    </div>                    
+                </div>  
+                <div class="inputs">
+                    <p>Url of your file: </p>
+                    <input type="text" placeholder="Url: ">
                 </div>
                 <div class="inputs">
                     <p>Public</p>
@@ -34,10 +55,6 @@
                         <div class="toggle__fill"></div>
                     </label>
                 </div>
-                <div class="inputs">
-                    <p>Url of your page: </p>
-                    <input type="text" placeholder="Url: ">
-                </div>                
                 <div class="buttons">
                     <button>Save</button>
                     <button>Edit</button>
@@ -49,10 +66,19 @@
     <script>
         const opener = document.querySelector('.opener');
         const pages_data = document.querySelector('.pages-data');
-    
+        const opener_sml = document.querySelector('.opener-sml');
+        const dp_content = document.querySelector('.dp-content');
+        const pages_options = document.querySelector('.pages-options');
+
         opener.addEventListener('click', () => {
             opener.classList.toggle('active');
             pages_data.classList.toggle('active');
+            pages_options.classList.toggle('active');
+        });
+        opener_sml.addEventListener('click', () => {
+            opener_sml.classList.toggle('active');
+            dp_content.classList.toggle('active');
+            pages_options.classList.toggle('active2');
         });
     </script>
 </body>

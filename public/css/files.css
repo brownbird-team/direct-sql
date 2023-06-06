@@ -1,0 +1,54 @@
+@import url(pages.css);
+
+.dp-btn {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem;
+    width: 3rem;
+    height: 1.2rem;
+    background-color: rgb(15, 15, 15, 0.8);
+    border: 1px solid gray;
+}
+.dp-btn p:nth-child(1) {
+    padding-right: 0.5rem;
+}
+.opener-sml {
+    margin-top: 0.4rem;
+    cursor: pointer;
+}
+.opener-sml div {
+    width: 0.7rem;
+    height: 0.2rem;
+    background-color: white;
+    transition: all 0.5s ease-in-out;
+}
+.opener-sml .line1 {
+    transform: rotate(45deg);
+}
+.opener-sml .line2 {
+    transform: translate(6px, -3px) rotate(-45deg);
+}
+.opener-sml.active .line1 {
+    transform: rotate(-45deg);
+}
+.opener-sml.active .line2 {
+    transform: translate(6px, -3px) rotate(45deg);
+}
+.input-dp {
+    display: flex;
+    flex-direction: column;
+}
+.dp-content {
+    display: none;
+}
+.dp-content.active {
+    display: flex;
+    flex-direction: row;
+}
+.dp-content.active p {
+    padding: 0.2rem;
+    border: 1px solid gray;
+    background-color: rgb(15, 15, 15, 0.8);
+    cursor: pointer;
+    text-align: center;
+}

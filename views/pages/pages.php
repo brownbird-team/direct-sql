@@ -4,7 +4,7 @@
         <button>Add new</button>
     </div>
     <div class="pages-options">
-        <div class="option">
+        <div class="options">
             <h2>Home</h2>
             <h2>view</h2>
             <div class="opener">
@@ -33,15 +33,17 @@
                 <button>Edit</button>
                 <button>Delete</button>
             </div>
-        </div>            
-    </div>        
+        </div>
+    </div>
 </div>
 <script>
     const opener = document.querySelector('.opener');
+    const pages_options = document.querySelector('.pages-options');
     const pages_data = document.querySelector('.pages-data');
 
     opener.addEventListener('click', () => {
         opener.classList.toggle('active');
         pages_data.classList.toggle('active');
+        pages_options.classList.toggle('active');                
     });
 </script>

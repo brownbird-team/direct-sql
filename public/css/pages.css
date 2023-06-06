@@ -8,59 +8,57 @@ body {
     --primary-txt-color: white;
 }
 .pages-container {
-    max-width: 70%;
-    margin: 15rem;
+    max-width: 50%;
+    margin: auto;
+    margin-top: 2rem;
 }
 .info {
     display: flex;
     justify-content: space-between;
 }
 .pages-container h1 {
-    text-indent: 2rem;
+    margin-left: 2rem;
 }
 .pages-options {
     display: flex;
     flex-direction: column;
     border: 1px solid white;
-    border-radius: 20px;
+    border-radius: 10px;
     width: 100%;
+    height: 75px;
     margin-top: 1rem;
     padding: 1rem;
+    transition: all 0.5s ease-in-out;
 }
-.option {
+.pages-options.active {
+    transition: all 0.5s ease-in-out;
+    height: 320px;
+}
+.pages-options.active.active2 {
+    transition: all 0.5s ease-in-out;
+    height: auto;
+}
+.options {
     display: flex;
-    text-indent: 1rem;
+    margin-left: 1rem;
 }
-.option h2 {
-    padding-right: 4rem;
+.options h2:first-child {
+    margin-right: 4rem;
+}
+.options h2:nth-child(2) {
     cursor: pointer;
-    position: relative;
-}
-.option h2::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    bottom: -2px;
-    left: 0;
-    background-color: white;
-    visibility: hidden;
-    transform: scaleX(0);
-    transition: all 0.2s ease-out;
-}
-
-.option h2:hover::before {
-    visibility: visible;
-    transform: scaleX(1);
 }
 .opener {
     margin: auto;
-    margin-right: 5.5%;
+    margin-right: 5%;
+    margin-top: 4%;
     cursor: pointer;
+    width: 4rem;
+    height: 2rem;
 }
 .opener div {
-    width: 2rem;
-    height: 0.3rem;
+    width: 1.5rem;
+    height: 0.2rem;
     background-color: white;
     transition: all 0.5s ease-in-out;
 }
@@ -68,25 +66,36 @@ body {
     transform: rotate(45deg);
 }
 .line2 {
-    transform: translate(21px, -5px) rotate(-45deg);
+    transform: translate(15px, -3px) rotate(-45deg);
+}
+.opener.active .line1 {
+    transform: rotate(-45deg);
+}
+.opener.active .line2 {
+    transform: translate(15px, -3px) rotate(45deg);
 }
 .pages-data {
-    display: none;
-    transition: all 0.5s ease-in-out;
+    width: 67%;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+.pages-data.active {
+    opacity: 1;
+    transition: all 0.5s ease-in-out 0.25s;
 }
 .inputs {
     display: flex;
-    margin-top: 1rem;
-    text-indent: 2rem;
-    margin-bottom: 1rem;
+    align-items: center;
+    margin: 0rem auto 0rem 1rem;
 }
 .pages-data input {
-    margin-left: 1.5rem;
-    width: 15%;
+    margin-left: 1rem;
+    height: 1rem;
+    max-width: 60%;
     padding: 0.5rem;
     font-size: 16px;
     background-color: rgb(20, 20, 20);
-    border-radius: 0.8rem;
+    border-radius: 5px;
     border: 2px solid rgb(60, 60, 60);
     color: var(--primary-txt-color);    
     transition: border 0.3s ease-in-out;
@@ -97,7 +106,6 @@ body {
     --border-radius: 10px;
     display: inline-block;
     cursor: pointer;
-    margin-top: 1rem;
     margin-left: 1rem;
 }
 .toggle__input {
@@ -106,7 +114,7 @@ body {
 .toggle__input:checked ~ .toggle__fill {
     background: rgb(26, 155, 225);
   }
-  
+
   .toggle__fill::after {
     content: "";
     position: absolute;
@@ -119,11 +127,11 @@ body {
     border-radius: var(--border-radius);
     transition: transform 0.2s;
   }
-  
+
   .toggle__input:checked ~ .toggle__fill::after {
     transform: translateX(var(--height));
   }
-  
+
 .toggle__fill {
     position: relative;
     width: var(--width);
@@ -133,23 +141,18 @@ body {
     transition: background 0.2s;
 }
 .pages-container button {
-    width: 10%;
     margin-right: 1rem;
-    padding: 0.8rem;
+    margin-top: 0.5rem;
+    padding: 0.7rem;
     font-size: 20px;
     border: none;
-    border-radius: 1rem;
+    border-radius: 10px;
     color: white;
     cursor: pointer;
     background: linear-gradient(to right, rgb(26, 105, 205), rgb(26, 155, 225));
 }
-.opener.active .line1 {
-    transform: rotate(-45deg);
-}
-.opener.active .line2 {
-    transform: translate(21px, -5px) rotate(45deg);
-}
-.pages-data.active {
-    display: block;
-    transition: all 0.5s ease-in-out;
+.buttons {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }
