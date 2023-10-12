@@ -91,3 +91,40 @@ Inače
 ```{% endif %}```
 
 završi if blok
+
+## Neki primjer
+
+```
+<!-- Ispis iz SQL tablice -->
+
+<table>
+    <tr>
+        <th>ime</th>
+        <th>prezime</th>
+        <th>maloljetan</th>
+    </tr>
+
+    {% sql query SELECT ime, prezime, maloljetan AS godine < 18 FROM table %}
+        <tr>
+            <td>{{{ $$ime }}}</td>	
+            <td>{{{ $$prezime }}}</td>
+
+            <td>{% if $$ime %} DA {% else %} NE {% endif %}</td>
+        </tr>
+    {% sql end %}
+</table>
+
+<!-- Upis u SQL tablicu -->
+
+{% if $method_post %}
+    {% sql query SELECT input_ok AS '$form_ime' != '' AND '$form_prez' != '' %}
+
+        {% if $$input_ok %}
+            {% sql query INSERT INTO mytable (ime, prezime) VALUES ($form_ime, $form_prez) %}
+        {% endif %}
+
+    {% sql end %}
+{% endif %}
+```
+
+Moguće da primjer nije baš točan s obzirom na najnoviju verziju kompajlera
