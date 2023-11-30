@@ -1,5 +1,7 @@
-# Panda SQL
+# PandaSQL
 
-Panda SQL je sučelje za izradu web stranica pomoću posebnog pojednostavljenog jezika koji omogućuje upis SQL naredbi direktno u HTML dokument, te na taj način pojednostavljuje učenje koncepata koji se koriste pri izradi web stranica spojenih na MySQL bazu podataka. Taj jezik se kasnije kompajlira u PHP i izcršava na serveru.
+PandaSQL is platform used to practice and learn MySQL. Development of PandaSQL is still in progress, but we should finish it by the end of this school year. More details about this project will be present in documentation once we write it.
 
-Izrada Panda SQL-a još nije započela te će svi detalji biti napisani kasnije.
+Platform itself will be written in JS and will use NodeJS as backend. For HTTP API we plan to use Express JS library. About MySQL interface, we are still considering multiple options, but we might end up choosing even simple mysql library. Frontend will be written using React or Svelte JS frameworks.
+
+Also whole project and it's documentation will from now on be written in English.
