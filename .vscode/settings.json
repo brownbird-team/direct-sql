@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        ".css": "tailwindcss",
+        ".scss": "tailwindcss",
+    },
+    "editor.quickSuggestions": {
+        "other": "on",
+        "comments": "off",
+        "strings": "on"
+    },
+    "css.lint.unknownAtRules": "ignore",
+    "scss.lint.unknownAtRules": "ignore"
+}
