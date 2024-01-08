@@ -1,27 +1,28 @@
 import Sequelize from 'sequelize';
+import getConfig from '../config/configES.js';
+import { NODE_ENV } from '$env/static/private';
 
 // Import all models
-// ...
-
-import { NODE_ENV } from '$env/static/private';
+import setupUser from './User.js';
 
 const db = {};
 
-export function init() {
+export function dbInit() {
     db.Sequelize = Sequelize;
+    const config = getConfig(NODE_ENV);
 
     db.sequelize = new Sequelize(
-        configAll(NODE_ENV).database, 
-        configAll(NODE_ENV).username, 
-        configAll(NODE_ENV).password,
-        configAll(NODE_ENV)
+        config.database,
+        config.username,
+        config.password,
+        config
     );
 
     // Call model setup functions
-    // ...
+    db.User = setupUser(db.sequelize, Sequelize.DataTypes);
 
     // Call model associate functions
-    // ...
+    db.User.associate(db);
 }
 
 // Export all models

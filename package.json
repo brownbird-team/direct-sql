@@ -5,7 +5,11 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"db:migrate:dev": "NODE_ENV=development npx sequelize db:migrate",
+		"db:migrate:prod": "NODE_ENV=production npx sequelize db:migrate",
+		"db:refresh:dev": "NODE_ENV=development npx sequelize db:seed:undo:all && npx sequelize db:migrate:undo:all && npx sequelize db:migrate && npx sequelize db:seed:all",
+		"db:refresh:prod": "NODE_ENV=production npx sequelize db:seed:undo:all && npx sequelize db:migrate:undo:all && npx sequelize db:migrate && npx sequelize db:seed:all"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
@@ -19,6 +23,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"bcrypt": "^5.1.1",
 		"dotenv": "^16.3.1",
 		"mysql": "^2.18.1",
 		"mysql2": "^3.7.0",
