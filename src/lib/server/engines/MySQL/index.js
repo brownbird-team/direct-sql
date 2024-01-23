@@ -1,6 +1,7 @@
 import mysql from 'mysql';
-import * as errors from './errors.js';
-import generateToken from '../../../lib/helpers/generateToken.js';
+import * as errors from '../errors.js';
+import generateToken from '../../../helpers/generateToken.js';
+import { ResponseRecords, ResponseOk, ResponseError,  } from './responses.js';
 //import { env } from '$env/dynamic/private';
 
 /*
@@ -20,6 +21,7 @@ import generateToken from '../../../lib/helpers/generateToken.js';
  * => dbprefix (default "pandasql_temdb_")
  * 
  */
+
 
 class MySQL {
     constructor(config) {
@@ -59,7 +61,7 @@ class MySQL {
                 FLUSH PRIVILEGES;
                 USE ${this.database};
             `, (err) => {
-                if (this.err) {
+                if (err) {
                     reject(err);
                     return;
                 }
@@ -69,38 +71,21 @@ class MySQL {
         });
     }
 
+    /**
+     * AHDSSADSA
+     * @param {*} query sdajdsjdhad
+     * @returns sdadwdadsa
+     */
     execute(query) {
         return new Promise((resolve, reject) => {
             this.conn.query(query, (err, results, fields) => {
-                const result = {
-                    error: null,
-                    results: [],
-                    fields: [],
-                }
 
                 if (err) {
-                    result.error = err.sqlMessage;
-                    resolve(result);
+                    reject(ResponseError(err));
                     return;
                 }
 
-                if (!Array.isArray(results[0])) {
-                    fields = [ fields ];
-                    results = [ results ];
-                }
-
-                results.forEach((res, index) => {
-                    fld = fields[index];
-
-                    result.results.push({
-                        
-                    });
-
-                });
-
-                console.log("QUERY => ", err, results, fields);
-                
-                resolve(result);
+                resolve(this.parseQueryResults(results, fields));
             });
         });
     }
@@ -119,14 +104,52 @@ class MySQL {
                     return;
                 }
 
-                resolve();
+                resolve();results
             });
         })
     }
 
+    parseQueryResults(results, fields) {
+        const res = {
+            fields: [],
+            results: [],
+        };
 
+        if (!results)
+            return res;
 
-    
+        const structure = (results, fields) => {
+            if (results instanceof Array) {
+                if (results[0] instanceof mysql.RowDataPacket) {
+                    return [ new ResponseRecords(results, fields) ];
+                }
+
+                const queryResults = [];
+
+                results.forEach((queryPart, index) => {
+                    if (queryPart instanceof mysql.OkPacket) {
+                        queryResults.push(new ResponseOk());
+                    } 
+                    else if (queryPart instanceof mysql.RowDataPacket) {
+                        queryResults.push(new ResponseRecords([ queryPart ], [ fields[index] ]))
+                    }
+                    else {
+                        queryResults.push(new ResponseRecords(queryPart, fields[index]));
+                    }
+                });
+
+                return queryResults;
+
+            } else {
+                if (results instanceof mysql.OkPacket) {
+                    return [ new ResponseOk() ]
+                }
+                if (results instanceof mysql.RowDataPacket) {
+                    return [ new ResponseRecords([ results ]) ];
+                }
+            }
+        }
+    }
 }
 
 export default MySQL
