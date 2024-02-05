@@ -87,6 +87,8 @@ export const actions = {
             query: queries,
         });
 
+        await mysql.end();
+
         throw redirect(303, '/run/' + hash);
     }
 };
