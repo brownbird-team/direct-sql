@@ -1,8 +1,6 @@
-import mysql from 'mysql';
+import mysql from 'mysql2/promise';
 import * as errors from '../errors.js';
 import generateToken from '../../../helpers/generateToken.js';
-import { ResponseRecords, ResponseOk, ResponseError,  } from './responses.js';
-//import { env } from '$env/dynamic/private';
 
 /*
  * MySQL database engine class
@@ -18,136 +16,126 @@ import { ResponseRecords, ResponseOk, ResponseError,  } from './responses.js';
  * => port
  * => username
  * => password
- * => dbprefix (default "pandasql_temdb_")
  * 
  */
 
 
 class MySQL {
     constructor(config) {
-        this.conn = mysql.createConnection({
-            host: config.host,
-            port: config.port,
-            user: config.username,
-            password: config.password,
+        this.config = config;
+    }
+
+    async connect() {
+        this.conn = await mysql.createConnection({
+            host: this.config.host,
+            port: this.config.port,
+            user: this.config.username,
+            password: this.config.password,
             multipleStatements: true,
+            rowsAsArray: true,
         });
     }
 
-    connect() {
-        return new Promise((resolve, reject) => {
-            this.conn.connect((err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
-                resolve(this);
-            });
-        });
-    }
-
-    setup() {
+    async setup() {
         this.id = generateToken(12);
         this.database = `pandasql_tempdb_${this.id}`;
         this.username = `pandasql_tempuser_${this.id}`;
         this.password = generateToken(64);
 
-        return new Promise((resolve, reject) => {
-            this.conn.query(`
+        try {
+            await this.conn.query(`
                 CREATE DATABASE ${this.database};
                 CREATE USER '${this.username}'@'%' IDENTIFIED BY '${this.password}';
                 GRANT ALL PRIVILEGES ON ${this.database}.* TO '${this.username}'@'%';
                 FLUSH PRIVILEGES;
                 USE ${this.database};
-            `, (err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-
-                resolve();
-            });
-        });
+            `);
+        } catch (err) {
+            throw new errors.EngineSystemError(err.sqlMessage, err.code);
+        }
     }
 
-    /**
-     * AHDSSADSA
-     * @param {*} query sdajdsjdhad
-     * @returns sdadwdadsa
-     */
-    execute(query) {
-        return new Promise((resolve, reject) => {
-            this.conn.query(query, (err, results, fields) => {
+    async execute(query) {
 
-                if (err) {
-                    reject(ResponseError(err));
-                    return;
-                }
+        try {
+            const [results, fields] = await this.conn.query(query);
+            return this.parseQueryResults(results, fields);
 
-                resolve(this.parseQueryResults(results, fields));
-            });
-        });
+        } catch (err) {
+            return [{
+                type: 'ERROR',
+                fields: [],
+                results: [],
+                error: {
+                    code: err.code,
+                    message: err.sqlMessage,
+                },
+            }];
+        }
     }
 
-    end() {
-        return new Promise((resolve, reject) => {
-            this.conn.query(`
+    async end() {
+        try {
+            await this.conn.query(`
                 REVOKE ALL PRIVILEGES ON ${this.database}.* FROM '${this.username}'@'%';
                 DROP DATABASE ${this.database};
                 DROP USER '${this.username}'@'%';
-            `, (err) => {
-                this.conn.end();
+            `);
 
-                if (err) {
-                    reject(err);
-                    return;
-                }
+            this.conn.destroy();
 
-                resolve();results
-            });
-        })
+        } catch (err) {
+            throw new errors.EngineSystemError(err.sqlMessage, err.code);
+        }
     }
 
     parseQueryResults(results, fields) {
-        const res = {
+
+        if (this.isRecordSet(results)) {
+            return [
+                this.prepareRecordsSet(results, fields)
+            ];
+        }
+
+        if (this.isResultSetHeader(results)) {
+            return [
+                this.prepareResultSetHeader(results, fields)
+            ]
+        }
+
+        return results.map((res, index) => {
+            if (this.isRecordSet(res))
+                return this.prepareRecordsSet(res, fields[index]);
+
+            if (this.isResultSetHeader(res))
+                return this.prepareResultSetHeader(res, fields[index]);
+        });
+    }
+
+    isRecordSet(variable) {
+        return Array.isArray(variable) && !variable.find(
+            v => !Array.isArray(v) || typeof(v[0]) == 'object'
+        );
+    }
+
+    prepareRecordsSet(results, fields) {
+        return {
+            type: 'RECORDS',
+            fields: fields.map(field => field.name),
+            results: results,
+        }
+    }
+
+    isResultSetHeader(variable) {
+        return typeof(variable) == 'object' 
+            && typeof(variable?.serverStatus) == 'number';
+    }
+
+    prepareResultSetHeader(results, fields) {
+        return {
+            type: 'OPERATION',
             fields: [],
             results: [],
-        };
-
-        if (!results)
-            return res;
-
-        const structure = (results, fields) => {
-            if (results instanceof Array) {
-                if (results[0] instanceof mysql.RowDataPacket) {
-                    return [ new ResponseRecords(results, fields) ];
-                }
-
-                const queryResults = [];
-
-                results.forEach((queryPart, index) => {
-                    if (queryPart instanceof mysql.OkPacket) {
-                        queryResults.push(new ResponseOk());
-                    } 
-                    else if (queryPart instanceof mysql.RowDataPacket) {
-                        queryResults.push(new ResponseRecords([ queryPart ], [ fields[index] ]))
-                    }
-                    else {
-                        queryResults.push(new ResponseRecords(queryPart, fields[index]));
-                    }
-                });
-
-                return queryResults;
-
-            } else {
-                if (results instanceof mysql.OkPacket) {
-                    return [ new ResponseOk() ]
-                }
-                if (results instanceof mysql.RowDataPacket) {
-                    return [ new ResponseRecords([ results ]) ];
-                }
-            }
         }
     }
 }

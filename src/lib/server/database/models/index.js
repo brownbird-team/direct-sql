@@ -4,6 +4,7 @@ import { NODE_ENV } from '$env/static/private';
 
 // Import all models
 import setupUser from './User.js';
+import setupQuery from './Query.js';
 
 const db = {};
 
@@ -20,9 +21,11 @@ export function dbInit() {
 
     // Call model setup functions
     db.User = setupUser(db.sequelize, Sequelize.DataTypes);
+    db.Query = setupQuery(db.sequelize, Sequelize.DataTypes);
 
     // Call model associate functions
     db.User.associate(db);
+    db.Query.associate(db);
 }
 
 // Export all models

@@ -9,6 +9,7 @@
     {#if !data.username}
         <a class="text-blue-600" href="/login">Go to login or something...</a>
     {:else}
+        <a class="text-blue-600" href="/login">Would you like to run some queries ?</a>
         <form method="POST" action="/logout" use:enhance>
             <button
                 class="text-blue-600"
