@@ -48,17 +48,26 @@ class MySQL {
                 CREATE USER '${this.username}'@'%' IDENTIFIED BY '${this.password}';
                 GRANT ALL PRIVILEGES ON ${this.database}.* TO '${this.username}'@'%';
                 FLUSH PRIVILEGES;
-                USE ${this.database};
             `);
         } catch (err) {
             throw new errors.EngineSystemError(err.sqlMessage, err.code);
         }
+
+        this.tempConn = await mysql.createConnection({
+            host: this.config.host,
+            port: this.config.port,
+            user: this.username,
+            password: this.password,
+            database: this.database,
+            multipleStatements: true,
+            rowsAsArray: true,
+        });
     }
 
     async execute(query) {
 
         try {
-            const [results, fields] = await this.conn.query(query);
+            const [results, fields] = await this.tempConn.query(query);
             return this.parseQueryResults(results, fields);
 
         } catch (err) {
